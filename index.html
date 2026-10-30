@@ -7,10 +7,10 @@
     * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { margin: 0; background: #f4f5f7; color: #222; }
     header { background: #ff6600; color: white; padding: 15px 25px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-    nav { background: #e05a00; padding: 10px 25px; display: flex; gap: 10px; }
+    nav { background: #e05a00; padding: 10px 25px; display: flex; gap: 10px; flex-wrap: wrap; }
     nav button { background: transparent; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; width: auto; margin: 0; }
     nav button.active, nav button:hover { background: rgba(255,255,255,0.2); }
-    .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: none; }
+    .container { max-width: 1150px; margin: 20px auto; padding: 0 15px; display: none; }
     .container.active { display: block; }
     .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
     h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
@@ -22,11 +22,29 @@
     .badge-pos { background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
     .badge-neg { background: #f8d7da; color: #721c24; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
     .badge-late { background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
-    .del-btn { background: none; color: red; width: auto; padding: 2px 6px; margin: 0; }
-    .del-btn:hover { background: #fee; }
+    .badge-abs { background: #cce5ff; color: #004085; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
+    .btn-small { width: auto; padding: 4px 8px; margin: 0 2px; font-size: 12px; }
+    .del-btn { background: #dc3545; color: white; }
+    .del-btn:hover { background: #b02a37; }
+    .edit-btn { background: #0d6efd; color: white; }
+    .edit-btn:hover { background: #0b5ed7; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .console { background: #1e1e1e; color: #00ff00; font-family: monospace; padding: 15px; border-radius: 5px; height: 180px; overflow-y: auto; font-size: 13px; }
-    @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+    .console { background: #1e1e1e; color: #00ff00; font-family: monospace; padding: 15px; border-radius: 5px; height: 200px; overflow-y: auto; font-size: 13px; line-height: 1.4; }
+
+    /* Suchbares Dropdown Styling */
+    .search-select { position: relative; margin-bottom: 10px; }
+    .search-select-display { padding: 10px; border: 1px solid #ccc; border-radius: 5px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+    .search-select-display::after { content: "▼"; font-size: 11px; color: #666; }
+    .search-select-dropdown { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ccc; border-radius: 5px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; margin-top: 2px; }
+    .search-select.open .search-select-dropdown { display: block; }
+    .search-select-input { border: none; border-bottom: 1px solid #eee; border-radius: 5px 5px 0 0; margin: 0; padding: 10px; width: 100%; outline: none; }
+    .search-select-list { max-height: 180px; overflow-y: auto; }
+    .search-select-item { padding: 8px 12px; cursor: pointer; font-size: 14px; }
+    .search-select-item:hover { background: #fff3eb; color: #ff6600; font-weight: bold; }
+    .search-select-empty { padding: 8px 12px; color: #888; font-size: 13px; }
+
+    @media (max-width: 900px) { .grid-3, .grid-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -45,10 +63,11 @@
 
   <!-- 1. KLASSENBUCH -->
   <div id="tab-klassenbuch" class="container active">
-    <div class="grid-2">
+    <div class="grid-3">
+      <!-- Positiv / Negativ -->
       <div class="card">
-        <h2>Neuer Eintrag</h2>
-        <select id="eintrag-lehrer"></select>
+        <h2>👍 / 👎 Neuer Eintrag</h2>
+        <div class="search-select" data-id="eintrag-lehrer"></div>
         <select id="eintrag-art">
           <option value="pos">👍 Positiver Eintrag</option>
           <option value="neg">👎 Negativer Eintrag</option>
@@ -57,20 +76,30 @@
         <button onclick="eintragAbsenden()">Eintrag speichern</button>
       </div>
 
+      <!-- Verspätung (max 90 Min) -->
       <div class="card">
-        <h2>⏰ Verspätung erfassen</h2>
-        <select id="verspaetung-lehrer"></select>
-        <input id="verspaetung-minuten" type="number" min="1" placeholder="Minuten zu spät...">
+        <h2>⏰ Verspätung (max. 90 Min.)</h2>
+        <div class="search-select" data-id="verspaetung-lehrer"></div>
+        <input id="verspaetung-minuten" type="number" min="1" max="90" placeholder="Minuten (1 - 90)...">
         <input id="verspaetung-grund" type="text" placeholder="Grund (optional)...">
         <button onclick="verspaetungAbsenden()">Verspätung speichern</button>
+      </div>
+
+      <!-- Entschuldigte Abwesenheit (max 1x pro Stunde) -->
+      <div class="card">
+        <h2>📅 Entschuldigte Abwesenheit</h2>
+        <div class="search-select" data-id="abwesenheit-lehrer"></div>
+        <input id="abwesenheit-grund" type="text" placeholder="Grund / Info (optional)...">
+        <p style="font-size: 12px; color: #666; margin: 4px 0 12px;">ℹ️ Jeder Lehrer kann max. 1x pro Stunde abwesend gemeldet werden.</p>
+        <button onclick="abwesenheitAbsenden()">Entschuldigt abwesend melden</button>
       </div>
     </div>
 
     <div class="card">
-      <h2>Letzte Aktivitäten</h2>
+      <h2>📋 Letzte Aktivitäten (Einträge, Verspätungen & Abwesenheiten)</h2>
       <table>
         <thead>
-          <tr><th>Datum</th><th>Lehrer</th><th>Typ</th><th>Wert / Grund</th></tr>
+          <tr><th>Datum</th><th>Lehrer</th><th>Kategorie</th><th>Details / Grund</th></tr>
         </thead>
         <tbody id="live-verlauf"></tbody>
       </table>
@@ -102,53 +131,67 @@
   <!-- 3. LEHRER SUCHE -->
   <div id="tab-suche" class="container">
     <div class="card">
-      <h2>Lehrer-Profil & Historie</h2>
-      <select id="suche-lehrer-select" onchange="lehrerSuchen()" style="margin-bottom: 15px;">
-        <option value="">-- Lehrer auswählen --</option>
-      </select>
-      <div id="suche-ergebnis">Wähle einen Lehrer aus, um alle Einträge und Verspätungen zu sehen.</div>
+      <h2>🔍 Lehrer-Profil & Alle Einträge</h2>
+      <div class="search-select" data-id="suche-lehrer" data-onchange="lehrerSuchen"></div>
+      <div id="suche-ergebnis" style="margin-top: 15px;">Wähle oben einen Lehrer aus, um alle Einträge, Verspätungen und Abwesenheiten zu sehen.</div>
     </div>
   </div>
 
   <!-- 4. ADMIN BEREICH -->
   <div id="tab-admin" class="container">
     <div class="card" id="admin-login-box">
-      <h2>Admin Login</h2>
+      <h2>🔒 Admin Login</h2>
       <input id="admin-pw" type="password" placeholder="Passwort eingeben...">
       <button onclick="adminLogin()">Anmelden</button>
     </div>
 
     <div id="admin-panel" style="display:none;">
-      <div class="card">
-        <h2>Lehrer hinzufügen</h2>
-        <input id="neuer-lehrer-name" type="text" placeholder="Vor- und Nachname des Lehrers...">
-        <button onclick="lehrerHinzufuegen()">Lehrer zur Datenbank hinzufügen</button>
+      <div class="grid-2">
+        <div class="card">
+          <h2>➕ Lehrer hinzufügen</h2>
+          <input id="neuer-lehrer-name" type="text" placeholder="Name des Lehrers...">
+          <button onclick="lehrerHinzufuegen()">Lehrer speichern</button>
+        </div>
+
+        <div class="card">
+          <h2>👨‍🏫 Lehrer bearbeiten & entfernen</h2>
+          <table>
+            <thead><tr><th>Name</th><th>Aktionen</th></tr></thead>
+            <tbody id="admin-lehrer-liste"></tbody>
+          </table>
+        </div>
       </div>
 
       <div class="card">
-        <h2>Einträge verwalten & löschen</h2>
+        <h2>🗑️ Alle Aktivitäten verwalten (Einträge, Verspätungen & Abwesenheiten)</h2>
         <table>
-          <thead><tr><th>Datum</th><th>Lehrer</th><th>Art / Grund</th><th>Aktion</th></tr></thead>
+          <thead><tr><th>Datum</th><th>Lehrer</th><th>Typ</th><th>Details</th><th>Aktion</th></tr></thead>
           <tbody id="admin-eintraege-liste"></tbody>
         </table>
       </div>
 
       <div class="card">
-        <h2>🖥️ System & Verbindungs-Diagnose</h2>
-        <div class="console" id="diagnose-console">Starte Diagnose...</div>
+        <h2>🖥️ System- & Datenbank-Diagnose Console</h2>
+        <div class="console" id="diagnose-console">Initialisiere Diagnose-System...<br></div>
       </div>
     </div>
   </div>
 
   <script>
     const URL_DB = "https://reverseuntis-default-rtdb.europe-west1.firebasedatabase.app";
-    let globalDaten = {eintraege: {}, verspaetungen: {}, lehrer: []};
+    let globalDaten = { eintraege: {}, verspaetungen: {}, abwesenheiten: {}, lehrer: [] };
+    const selectedValues = {};
 
-    // Schimpfwortfilter (Luxemburgisch, Deutsch, Französisch, Englisch)
+    // Sprachfilter (Luxemburgisch, Deutsch, Französisch, Englisch)
     const badWords = [
-      "schlampe", "fotze", "hurensohn", "arschloch", "scheisse", "scheiße", "fk", "fuck", "shit", "bitch", "asshole",
-      "connard", "salope", "pute", "merde", "fesse",
-      "scheiss", "drecks", "mellt", "blier", "virst" // Lokale Begriffe
+      // Luxemburgisch
+      "schäiss", "schaiss", "fick", "ficken", "fotz", "houer", "aschlach", "aarschloch", "pisser", "kack", "spast", "schwuchtel", "bastard", "wixer", "mellt", "blier",
+      // Deutsch
+      "schlampe", "fotze", "hurensohn", "arschloch", "scheisse", "scheiße", "wichser", "missgeburt", "hure", "nutte", "drecksau", "vollidiot",
+      // Französisch
+      "connard", "salope", "pute", "merde", "enculé", "encule", "putain", "batard", "bâtard", "ntm", "fdp", "chier",
+      // Englisch
+      "fuck", "shit", "bitch", "asshole", "cunt", "dick", "pussy", "motherfucker", "retard", "slut", "whore"
     ];
 
     function pruefeText(text) {
@@ -161,40 +204,131 @@
       return sauber;
     }
 
+    // Automatischer Fehler-Logger für die Diagnose-Console
+    window.onerror = function(msg, url, line) {
+      logConsole(`❌ CODE-FEHLER (Zeile ${line}): ${msg}`);
+    };
+    window.onunhandledrejection = function(event) {
+      logConsole(`⚠️ PROMISE/NETZWERK-FEHLER: ${event.reason}`);
+    };
+
+    function logConsole(msg) {
+      const con = document.getElementById("diagnose-console");
+      if (con) {
+        const zeit = new Date().toLocaleTimeString();
+        con.innerHTML += `[${zeit}] ${msg}<br>`;
+        con.scrollTop = con.scrollHeight;
+      }
+    }
+
+    // Suchbares Dropdown-System
+    function initSearchSelects() {
+      document.querySelectorAll(".search-select").forEach(el => {
+        const id = el.dataset.id;
+        el.innerHTML = `
+          <div class="search-select-display" onclick="toggleDropdown('${id}')">
+            <span id="display-${id}">-- Lehrer auswählen --</span>
+          </div>
+          <div class="search-select-dropdown">
+            <input type="text" class="search-select-input" id="search-${id}" placeholder="🔍 Lehrer suchen..." oninput="filterDropdown('${id}')">
+            <div class="search-select-list" id="list-${id}"></div>
+          </div>
+        `;
+      });
+
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".search-select")) {
+          document.querySelectorAll(".search-select").forEach(s => s.classList.remove("open"));
+        }
+      });
+    }
+
+    function toggleDropdown(id) {
+      const parent = document.querySelector(`.search-select[data-id="${id}"]`);
+      const wasOpen = parent.classList.contains("open");
+      document.querySelectorAll(".search-select").forEach(s => s.classList.remove("open"));
+      if (!wasOpen) {
+        parent.classList.add("open");
+        const input = document.getElementById(`search-${id}`);
+        input.value = "";
+        filterDropdown(id);
+        input.focus();
+      }
+    }
+
+    function filterDropdown(id) {
+      const suchbegriff = (document.getElementById(`search-${id}`)?.value || "").toLowerCase();
+      const listEl = document.getElementById(`list-${id}`);
+      const lehrerListe = (globalDaten.lehrer || []).filter(Boolean);
+      const gefiltert = lehrerListe.filter(l => l.toLowerCase().includes(suchbegriff));
+
+      if (gefiltert.length === 0) {
+        listEl.innerHTML = `<div class="search-select-empty">Kein Lehrer gefunden</div>`;
+        return;
+      }
+
+      listEl.innerHTML = gefiltert.map(l => 
+        `<div class="search-select-item" onclick="selectLehrer('${id}', '${l.replace(/'/g, "\\'")}')">${l}</div>`
+      ).join("");
+    }
+
+    function selectLehrer(id, name) {
+      selectedValues[id] = name;
+      document.getElementById(`display-${id}`).innerText = name;
+      const parent = document.querySelector(`.search-select[data-id="${id}"]`);
+      parent.classList.remove("open");
+      if (parent.dataset.onchange && typeof window[parent.dataset.onchange] === "function") {
+        window[parent.dataset.onchange]();
+      }
+    }
+
+    function aktualisiereDropdowns() {
+      document.querySelectorAll(".search-select").forEach(el => {
+        const id = el.dataset.id;
+        filterDropdown(id);
+        // Falls ausgewählter Lehrer gelöscht wurde, zurücksetzen
+        if (selectedValues[id] && !(globalDaten.lehrer || []).includes(selectedValues[id])) {
+          selectedValues[id] = "";
+          document.getElementById(`display-${id}`).innerText = "-- Lehrer auswählen --";
+        }
+      });
+    }
+
     // Tabs umschalten
     function tab(name) {
       document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
       document.getElementById(`tab-${name}`).classList.add('active');
       document.getElementById(`btn-${name}`).classList.add('active');
-      if(name === 'leaderboards') renderLeaderboards();
+      if (name === 'leaderboards') renderLeaderboards();
+      if (name === 'suche') lehrerSuchen();
     }
 
-    // Daten laden
+    // Daten von Firebase laden & Diagnose prüfen
     async function datenLaden() {
-      logConsole("Prüfe Verbindung zur Firebase-Datenbank...");
+      const start = performance.now();
       try {
         const res = await fetch(`${URL_DB}/.json`);
-        if (!res.ok) throw new Error("HTTP Fehler: " + res.status);
+        if (!res.ok) throw new Error("HTTP Status " + res.status);
         const data = await res.json();
-        
-        globalDaten = data || {eintraege: {}, verspaetungen: {}, lehrer: []};
-        logConsole("Verbindung erfolgreich! Daten synchronisiert.");
+        const ping = Math.round(performance.now() - start);
 
+        const rawLehrer = data?.lehrer ? (Array.isArray(data.lehrer) ? data.lehrer : Object.values(data.lehrer)) : [];
+        globalDaten = {
+          eintraege: data?.eintraege || {},
+          verspaetungen: data?.verspaetungen || {},
+          abwesenheiten: data?.abwesenheiten || {},
+          lehrer: rawLehrer.filter(Boolean)
+        };
+
+        logConsole(`✅ DB-Sync OK (${ping}ms) | Lehrer: ${globalDaten.lehrer.length}`);
         aktualisiereDropdowns();
         renderVerlauf();
-        if(document.getElementById('tab-admin').classList.contains('active')) renderAdminListe();
+        if (document.getElementById('tab-leaderboards').classList.contains('active')) renderLeaderboards();
+        if (document.getElementById('tab-suche').classList.contains('active')) lehrerSuchen();
+        if (document.getElementById('admin-panel').style.display === 'block') renderAdminListen();
       } catch (err) {
-        logConsole("⚠️ FEHLER: Keine Verbindung zur Datenbank oder Netzwerkproblem! (" + err.message + ")");
-      }
-    }
-
-    function logConsole(msg) {
-      const con = document.getElementById("diagnose-console");
-      if(con) {
-        const zeit = new Date().toLocaleTimeString();
-        con.innerHTML += `[${zeit}] ${msg}<br>`;
-        con.scrollTop = con.scrollHeight;
+        logConsole(`🚨 LOST CONNECTION zur Datenbank! (${err.message})`);
       }
     }
 
@@ -202,107 +336,143 @@
       return new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
     }
 
-    function aktualisiereDropdowns() {
-      const lehrerList = globalDaten.lehrer || [];
-      const optionen = lehrerList.length ? lehrerList.map(l => `<option value="${l}">${l}</option>`).join("") : `<option value="">Keine Lehrer vorhanden (Admin fragen)</option>`;
-      
-      document.getElementById("eintrag-lehrer").innerHTML = optionen;
-      document.getElementById("verspaetung-lehrer").innerHTML = optionen;
-      document.getElementById("suche-lehrer-select").innerHTML = `<option value="">-- Lehrer auswählen --</option>` + optionen;
-    }
-
-    // Einträge abschicken
-    async function eintragen() {
-      // Hilfsfunktion
-    }
-
+    // 1. Positiv / Negativ Eintrag speichern
     async function eintragAbsenden() {
-      const lehrer = document.getElementById("eintrag-lehrer").value;
+      const lehrer = selectedValues["eintrag-lehrer"];
       const typ = document.getElementById("eintrag-art").value;
       const grund = pruefeText(document.getElementById("eintrag-grund").value.trim());
 
-      if (!lehrer) return alert("Bitte Lehrer auswählen!");
+      if (!lehrer) return alert("Bitte zuerst einen Lehrer auswählen!");
 
       await fetch(`${URL_DB}/eintraege.json`, {
         method: "POST",
-        body: JSON.stringify({ lehrer, typ, grund, datum: aktuelldatum() })
+        body: JSON.stringify({ lehrer, typ, grund, datum: aktuelldatum(), timestamp: Date.now() })
       });
 
       document.getElementById("eintrag-grund").value = "";
       datenLaden();
-      alert("Eintrag gespeichert!");
     }
 
+    // 2. Verspätung speichern (Maximal 90 Min = 1,5 Stunden)
     async function verspaetungAbsenden() {
-      const lehrer = document.getElementById("verspaetung-lehrer").value;
+      const lehrer = selectedValues["verspaetung-lehrer"];
       const minuten = Number(document.getElementById("verspaetung-minuten").value);
       const grund = pruefeText(document.getElementById("verspaetung-grund").value.trim());
 
-      if (!lehrer || !minuten || minuten <= 0) return alert("Bitte Lehrer und gültige Minuten eingeben!");
+      if (!lehrer) return alert("Bitte zuerst einen Lehrer auswählen!");
+      if (!minuten || minuten <= 0 || minuten > 90) {
+        return alert("Bitte eine gültige Verspätung zwischen 1 und maximal 90 Minuten (1,5 Stunden) eingeben!");
+      }
 
       await fetch(`${URL_DB}/verspaetungen.json`, {
         method: "POST",
-        body: JSON.stringify({ lehrer, minuten, grund, datum: aktuelldatum() })
+        body: JSON.stringify({ lehrer, minuten, grund, datum: aktuelldatum(), timestamp: Date.now() })
       });
 
       document.getElementById("verspaetung-minuten").value = "";
       document.getElementById("verspaetung-grund").value = "";
       datenLaden();
-      alert("Verspätung gespeichert!");
     }
 
-    // Verlauf rendern
+    // 3. Entschuldigte Abwesenheit speichern (Max. 1x pro Stunde pro Lehrer)
+    async function abwesenheitAbsenden() {
+      const lehrer = selectedValues["abwesenheit-lehrer"];
+      const grund = pruefeText(document.getElementById("abwesenheit-grund").value.trim());
+
+      if (!lehrer) return alert("Bitte zuerst einen Lehrer auswählen!");
+
+      // Prüfen, ob dieser Lehrer in den letzten 60 Minuten schon gemeldet wurde
+      const jetztMs = Date.now();
+      const eineStundeMs = 60 * 60 * 1000;
+      const bisherige = Object.values(globalDaten.abwesenheiten || {}).filter(a => a.lehrer === lehrer);
+
+      for (const a of bisherige) {
+        if (a.timestamp && (jetztMs - a.timestamp) < eineStundeMs) {
+          const restMin = Math.ceil((eineStundeMs - (jetztMs - a.timestamp)) / 60000);
+          return alert(`⏳ Sperre aktiv: ${lehrer} wurde in dieser Stunde bereits abwesend gemeldet! Bitte warte noch ${restMin} Minute(n).`);
+        }
+      }
+
+      await fetch(`${URL_DB}/abwesenheiten.json`, {
+        method: "POST",
+        body: JSON.stringify({ lehrer, grund, datum: aktuelldatum(), timestamp: jetztMs })
+      });
+
+      document.getElementById("abwesenheit-grund").value = "";
+      datenLaden();
+    }
+
+    // Alle Aktivitäten kombiniert sammeln & nach Zeit sortieren
+    function holeAlleAktivitaeten() {
+      const alle = [];
+      Object.entries(globalDaten.eintraege || {}).forEach(([id, e]) => {
+        alle.push({ id, kategorie: "eintraege", datum: e.datum, timestamp: e.timestamp || 0, lehrer: e.lehrer, typ: e.typ, details: e.grund || "-" });
+      });
+      Object.entries(globalDaten.verspaetungen || {}).forEach(([id, v]) => {
+        alle.push({ id, kategorie: "verspaetungen", datum: v.datum, timestamp: v.timestamp || 0, lehrer: v.lehrer, typ: "late", minuten: v.minuten, details: `${v.minuten} Min. zu spät${v.grund ? ' (' + v.grund + ')' : ''}` });
+      });
+      Object.entries(globalDaten.abwesenheiten || {}).forEach(([id, a]) => {
+        alle.push({ id, kategorie: "abwesenheiten", datum: a.datum, timestamp: a.timestamp || 0, lehrer: a.lehrer, typ: "abs", details: a.grund || "Entschuldigt abwesend" });
+      });
+      return alle.sort((a, b) => b.timestamp - a.timestamp);
+    }
+
+    function formatBadge(item) {
+      if (item.typ === "pos") return `<span class="badge-pos">👍 Positiv</span>`;
+      if (item.typ === "neg") return `<span class="badge-neg">👎 Negativ</span>`;
+      if (item.typ === "late") return `<span class="badge-late">⏰ Verspätung</span>`;
+      if (item.typ === "abs") return `<span class="badge-abs">📅 Entschuldigt abwesend</span>`;
+      return "-";
+    }
+
+    // Verlauf im Klassenbuch rendern
     function renderVerlauf() {
       const verlaufBody = document.getElementById("live-verlauf");
-      verlaufBody.innerHTML = "";
+      const aktivitaeten = holeAlleAktivitaeten().slice(0, 25);
 
-      const eintraege = globalDaten.eintraege ? Object.entries(globalDaten.eintraege).reverse() : [];
-      eintraege.slice(0, 15).forEach(([id, e]) => {
-        const badge = e.typ === 'pos' ? `<span class="badge-pos">👍 Positiv</span>` : `<span class="badge-neg">👎 Negativ</span>`;
-        verlaufBody.innerHTML += `<tr><td>${e.datum}</td><td><b>${e.lehrer}</b></td><td>${badge}</td><td>${e.grund || '-'}</td></tr>`;
-      });
+      if (aktivitaeten.length === 0) {
+        verlaufBody.innerHTML = `<tr><td colspan="4">Noch keine Aktivitäten vorhanden.</td></tr>`;
+        return;
+      }
+
+      verlaufBody.innerHTML = aktivitaeten.map(item => `
+        <tr>
+          <td>${item.datum || "-"}</td>
+          <td><b>${item.lehrer}</b></td>
+          <td>${formatBadge(item)}</td>
+          <td>${item.details}</td>
+        </tr>
+      `).join("");
     }
 
-    // 4 Leaderboards
+    // 4 Leaderboards rendern
     function renderLeaderboards() {
-      const posStats = {};
-      const negStats = {};
-      const minStats = {};
+      const posStats = {}, negStats = {}, minStats = {};
 
-      // Initialisieren mit allen Lehrern
       (globalDaten.lehrer || []).forEach(l => {
         posStats[l] = 0; negStats[l] = 0; minStats[l] = 0;
       });
 
-      if (globalDaten.eintraege) {
-        Object.values(globalDaten.eintraege).forEach(e => {
-          if (!posStats[e.lehrer]) { posStats[e.lehrer] = 0; negStats[e.lehrer] = 0; }
-          if (e.typ === 'pos') posStats[e.lehrer]++;
-          if (e.typ === 'neg') negStats[e.lehrer]++;
-        });
-      }
+      Object.values(globalDaten.eintraege || {}).forEach(e => {
+        if (posStats[e.lehrer] === undefined) { posStats[e.lehrer] = 0; negStats[e.lehrer] = 0; }
+        if (e.typ === 'pos') posStats[e.lehrer]++;
+        if (e.typ === 'neg') negStats[e.lehrer]++;
+      });
 
-      if (globalDaten.verspaetungen) {
-        Object.values(globalDaten.verspaetungen).forEach(v => {
-          if (minStats[v.lehrer] === undefined) minStats[v.lehrer] = 0;
-          minStats[v.lehrer] += Number(v.minuten) || 0;
-        });
-      }
+      Object.values(globalDaten.verspaetungen || {}).forEach(v => {
+        if (minStats[v.lehrer] === undefined) minStats[v.lehrer] = 0;
+        minStats[v.lehrer] += Number(v.minuten) || 0;
+      });
 
-      // Tabellen befüllen
-      document.getElementById("lb-pos").innerHTML = sortAndRender(posStats, 'anzahl', 'pos');
-      document.getElementById("lb-neg").innerHTML = sortAndRender(negStats, 'anzahl', 'neg');
-      document.getElementById("lb-most-late").innerHTML = sortAndRender(minStats, 'Minuten', 'late');
-      document.getElementById("lb-least-late").innerHTML = sortAndRender(minStats, 'Minuten', 'least');
+      document.getElementById("lb-pos").innerHTML = sortAndRender(posStats, 'Einträge', 'desc');
+      document.getElementById("lb-neg").innerHTML = sortAndRender(negStats, 'Einträge', 'desc');
+      document.getElementById("lb-most-late").innerHTML = sortAndRender(minStats, 'Min.', 'desc');
+      document.getElementById("lb-least-late").innerHTML = sortAndRender(minStats, 'Min.', 'asc');
     }
 
-    function sortAndRender(obj, einheit, typ) {
-      let arr = Object.entries(obj);
-      if (typ === 'least') {
-        arr.sort((a,b) => a[1] - b[1]);
-      } else {
-        arr.sort((a,b) => b[1] - a[1]);
-      }
+    function sortAndRender(obj, einheit, richtung) {
+      const arr = Object.entries(obj);
+      arr.sort((a, b) => richtung === 'asc' ? a[1] - b[1] : b[1] - a[1]);
 
       return arr.map(([name, val], index) => {
         const medaille = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
@@ -310,98 +480,134 @@
       }).join("") || `<tr><td colspan="3">Keine Daten</td></tr>`;
     }
 
-    // Lehrersuche
+    // Lehrer-Suche
     function lehrerSuchen() {
-      const name = document.getElementById("suche-lehrer-select").value;
+      const name = selectedValues["suche-lehrer"];
       const ergebnisDiv = document.getElementById("suche-ergebnis");
-      if (!name) { ergebnisDiv.innerHTML = "Wähle einen Lehrer aus."; return; }
-
-      let html = `<h3>Aktivitäten für ${name}</h3>`;
-      
-      html += `<h4>Einträge:</h4><ul>`;
-      let hatEintraege = false;
-      if (globalDaten.eintraege) {
-        Object.values(globalDaten.eintraege).forEach(e => {
-          if (e.lehrer === name) {
-            hatEintraege = true;
-            html += `<li>[${e.datum}] <b>${e.typ === 'pos' ? '👍 Positiv' : '👎 Negativ'}</b>: ${e.grund || 'Kein Grund'}</li>`;
-          }
-        });
+      if (!name) {
+        ergebnisDiv.innerHTML = "Wähle oben einen Lehrer aus, um alle Einträge, Verspätungen und Abwesenheiten zu sehen.";
+        return;
       }
-      if (!hatEintraege) html += `<li>Keine Einträge vorhanden.</li>`;
-      html += `</ul>`;
 
-      html += `<h4>Verspätungen:</h4><ul>`;
-      let hatVerspaetung = false;
-      if (globalDaten.verspaetungen) {
-        Object.values(globalDaten.verspaetungen).forEach(v => {
-          if (v.lehrer === name) {
-            hatVerspaetung = true;
-            html += `<li>[${v.datum}] ⏰ <b>${v.minuten} Min. zu spät</b> (${v.grund || 'Kein Grund'})</li>`;
-          }
-        });
+      const treffer = holeAlleAktivitaeten().filter(a => a.lehrer === name);
+      if (treffer.length === 0) {
+        ergebnisDiv.innerHTML = `<h3>${name}</h3><p>Keine Einträge, Verspätungen oder Abwesenheiten für diesen Lehrer gefunden.</p>`;
+        return;
       }
-      if (!hatVerspaetung) hatVerspaetung = html += `<li>Keine Verspätungen eingetragen.</li>`;
-      html += `</ul>`;
 
-      ergebnisDiv.innerHTML = html;
+      ergebnisDiv.innerHTML = `
+        <h3>Alle Einträge für ${name} (${treffer.length})</h3>
+        <table>
+          <thead><tr><th>Datum</th><th>Kategorie</th><th>Details</th></tr></thead>
+          <tbody>
+            ${treffer.map(t => `<tr><td>${t.datum}</td><td>${formatBadge(t)}</td><td>${t.details}</td></tr>`).join("")}
+          </tbody>
+        </table>
+      `;
     }
 
-    // Admin Login & Aktionen
+    // Admin Login & Funktionen
     function adminLogin() {
       const pw = document.getElementById("admin-pw").value;
       if (pw === "Gaylord!") {
         document.getElementById("admin-login-box").style.display = "none";
         document.getElementById("admin-panel").style.display = "block";
-        renderAdminListe();
-        logConsole("Admin erfolgreich eingeloggt.");
+        renderAdminListen();
+        logConsole("🔓 Admin erfolgreich eingeloggt.");
       } else {
         alert("Falsches Passwort!");
-        logConsole("⚠️ Fehlgeschlagener Admin-Login Versuch.");
+        logConsole("⚠️ Fehlgeschlagener Admin-Login!");
       }
     }
 
     async function lehrerHinzufuegen() {
-      const neuerLehrer = document.getElementById("neuer-lehrer-name").value.trim();
-      if (!neuerLehrer) return alert("Bitte Namen eingeben!");
+      const neuerLehrer = pruefeText(document.getElementById("neuer-lehrer-name").value.trim());
+      if (!neuerLehrer) return alert("Bitte einen Namen eingeben!");
 
-      let lehrerListe = globalDaten.lehrer || [];
-      if (lehrerListe.includes(neuerLehrer)) return alert("Lehrer existiert bereits!");
+      const lehrerListe = globalDaten.lehrer || [];
+      if (lehrerListe.includes(neuerLehrer)) return alert("Dieser Lehrer existiert bereits!");
 
       lehrerListe.push(neuerLehrer);
-
-      await fetch(`${URL_DB}/lehrer.json`, {
-        method: "PUT",
-        body: JSON.stringify(lehrerListe)
-      });
+      await fetch(`${URL_DB}/lehrer.json`, { method: "PUT", body: JSON.stringify(lehrerListe) });
 
       document.getElementById("neuer-lehrer-name").value = "";
-      logConsole(`Lehrer "${neuerLehrer}" hinzugefügt.`);
+      logConsole(`➕ Lehrer "${neuerLehrer}" hinzugefügt.`);
       datenLaden();
-      alert("Lehrer hinzugefügt!");
     }
 
-    function renderAdminListe() {
-      const tbody = document.getElementById("admin-eintraege-liste");
-      tbody.innerHTML = "";
+    async function lehrerBearbeiten(alterName) {
+      const neuerName = pruefeText(prompt(`Neuer Name für "${alterName}":`, alterName)?.trim());
+      if (!neuerName || neuerName === alterName) return;
 
-      if (globalDaten.eintraege) {
-        Object.entries(globalDaten.eintraege).forEach(([id, e]) => {
-          tbody.innerHTML += `<tr><td>${e.datum}</td><td>${e.lehrer}</td><td>${e.typ} - ${e.grund || ''}</td><td><button class="del-btn" onclick="eintragLoeschen('${id}')">❌ Löschen</button></td></tr>`;
-        });
+      const lehrerListe = (globalDaten.lehrer || []).map(l => l === alterName ? neuerName : l);
+      await fetch(`${URL_DB}/lehrer.json`, { method: "PUT", body: JSON.stringify(lehrerListe) });
+
+      // Bestehende Einträge, Verspätungen und Abwesenheiten auf neuen Namen aktualisieren
+      for (const [id, e] of Object.entries(globalDaten.eintraege || {})) {
+        if (e.lehrer === alterName) await fetch(`${URL_DB}/eintraege/${id}/lehrer.json`, { method: "PUT", body: JSON.stringify(neuerName) });
       }
-    }
+      for (const [id, v] of Object.entries(globalDaten.verspaetungen || {})) {
+        if (v.lehrer === alterName) await fetch(`${URL_DB}/verspaetungen/${id}/lehrer.json`, { method: "PUT", body: JSON.stringify(neuerName) });
+      }
+      for (const [id, a] of Object.entries(globalDaten.abwesenheiten || {})) {
+        if (a.lehrer === alterName) await fetch(`${URL_DB}/abwesenheiten/${id}/lehrer.json`, { method: "PUT", body: JSON.stringify(neuerName) });
+      }
 
-    async function eintragLoeschen(id) {
-      if(!confirm("Eintrag wirklich löschen?")) return;
-      await fetch(`${URL_DB}/eintraege/${id}.json`, { method: "DELETE" });
-      logConsole(`Eintrag ${id} gelöscht.`);
+      logConsole(`✏️ Lehrer "${alterName}" in "${neuerName}" umbenannt.`);
       datenLaden();
     }
 
-    // Start-Initialisierung
+    async function lehrerEntfernen(name) {
+      if (!confirm(`Lehrer "${name}" wirklich aus der Liste entfernen?`)) return;
+      const lehrerListe = (globalDaten.lehrer || []).filter(l => l !== name);
+      await fetch(`${URL_DB}/lehrer.json`, { method: "PUT", body: JSON.stringify(lehrerListe) });
+
+      logConsole(`🗑️ Lehrer "${name}" entfernt.`);
+      datenLaden();
+    }
+
+    function renderAdminListen() {
+      // 1. Lehrer-Verwaltung
+      const lehrerTbody = document.getElementById("admin-lehrer-liste");
+      const lehrerListe = globalDaten.lehrer || [];
+      lehrerTbody.innerHTML = lehrerListe.map(l => {
+        const safe = l.replace(/'/g, "\\'");
+        return `
+          <tr>
+            <td><b>${l}</b></td>
+            <td>
+              <button class="btn-small edit-btn" onclick="lehrerBearbeiten('${safe}')">✏️ Bearbeiten</button>
+              <button class="btn-small del-btn" onclick="lehrerEntfernen('${safe}')">🗑️ Entfernen</button>
+            </td>
+          </tr>
+        `;
+      }).join("") || `<tr><td colspan="2">Keine Lehrer angelegt.</td></tr>`;
+
+      // 2. Alle Aktivitäten (Einträge, Verspätungen, Abwesenheiten) löschen können
+      const eintraegeTbody = document.getElementById("admin-eintraege-liste");
+      const alle = holeAlleAktivitaeten();
+      eintraegeTbody.innerHTML = alle.map(item => `
+        <tr>
+          <td>${item.datum || "-"}</td>
+          <td><b>${item.lehrer}</b></td>
+          <td>${formatBadge(item)}</td>
+          <td>${item.details}</td>
+          <td><button class="btn-small del-btn" onclick="aktivitaetLoeschen('${item.kategorie}', '${item.id}')">❌ Löschen</button></td>
+        </tr>
+      `).join("") || `<tr><td colspan="5">Keine Einträge vorhanden.</td></tr>`;
+    }
+
+    async function aktivitaetLoeschen(kategorie, id) {
+      if (!confirm("Diesen Eintrag wirklich endgültig löschen?")) return;
+      await fetch(`${URL_DB}/${kategorie}/${id}.json`, { method: "DELETE" });
+      logConsole(`🗑️ Eintrag aus "${kategorie}" (${id}) gelöscht.`);
+      datenLaden();
+    }
+
+    // Start
+    initSearchSelects();
     datenLaden();
-    setInterval(datenLaden, 5000); // Live-Sync alle 5 Sekunden
+    setInterval(datenLaden, 5000);
   </script>
 </body>
 </html>
