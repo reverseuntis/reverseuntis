@@ -31,7 +31,12 @@
     button { background: #ff6600; color: white; border: none; font-weight: bold; cursor: pointer; transition: background 0.15s; }
     button:hover { background: #e05a00; }
     .table-wrap { width: 100%; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 5px; min-width: 420px; }
+    
+    /* Scrollbare Admin-Menüs */
+    .admin-scroll { max-height: 250px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 6px; }
+    .admin-scroll thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; box-shadow: 0 1px 0 #ddd; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 0; min-width: 420px; }
     th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eee; }
 
     /* Badges & Buttons */
@@ -96,7 +101,6 @@
   <!-- 1. KLASSENBUCH -->
   <div id="tab-klassenbuch" class="container active">
     <div class="grid-auto">
-      <!-- Positiv / Negativ -->
       <div class="card">
         <h2 data-i18n="new_entry">👍 / 👎 Neuer Eintrag</h2>
         <div class="search-select" data-id="eintrag-lehrer"></div>
@@ -108,7 +112,6 @@
         <button onclick="eintragAbsenden()" data-i18n="btn_save_entry">Eintrag speichern</button>
       </div>
 
-      <!-- Verspätung -->
       <div class="card">
         <h2 data-i18n="new_late">⏰ Verspätung (max. 90 Min.)</h2>
         <div class="search-select" data-id="verspaetung-lehrer"></div>
@@ -117,7 +120,6 @@
         <button onclick="verspaetungAbsenden()" data-i18n="btn_save_late">Verspätung speichern</button>
       </div>
 
-      <!-- Entschuldigte Abwesenheit -->
       <div class="card">
         <h2 data-i18n="new_abs">📅 Entschuldigte Abwesenheit</h2>
         <div class="search-select" data-id="abwesenheit-lehrer"></div>
@@ -210,7 +212,7 @@
 
         <div class="card">
           <h2 data-i18n="admin_manage_t">👨‍🏫 Lehrer bearbeiten & entfernen</h2>
-          <div class="table-wrap">
+          <div class="admin-scroll">
             <table>
               <thead><tr><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_action">Aktion</th></tr></thead>
               <tbody id="admin-lehrer-liste"></tbody>
@@ -219,10 +221,10 @@
         </div>
       </div>
 
-      <!-- Vorschläge im Admin-Bereich -->
+      <!-- Scrollbare Vorschläge im Admin-Bereich -->
       <div class="card">
         <h2 data-i18n="admin_sug">💡 Eingereichte Vorschläge (Lehrer & Verbesserungen)</h2>
-        <div class="table-wrap">
+        <div class="admin-scroll">
           <table>
             <thead><tr><th data-i18n="th_date">Datum</th><th data-i18n="th_cat">Kategorie</th><th data-i18n="th_details">Vorschlag</th><th data-i18n="th_action">Aktion</th></tr></thead>
             <tbody id="admin-vorschlaege-liste"></tbody>
@@ -230,9 +232,10 @@
         </div>
       </div>
 
+      <!-- Scrollbare Aktivitäten im Admin-Bereich -->
       <div class="card">
         <h2 data-i18n="admin_act">🗑️ Alle Aktivitäten verwalten</h2>
-        <div class="table-wrap">
+        <div class="admin-scroll" style="max-height: 320px;">
           <table>
             <thead><tr><th data-i18n="th_date">Datum</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_cat">Kategorie</th><th data-i18n="th_details">Details</th><th data-i18n="th_action">Aktion</th></tr></thead>
             <tbody id="admin-eintraege-liste"></tbody>
@@ -253,7 +256,6 @@
     const selectedValues = {};
     let currentLang = "de";
 
-    // Übersetzungen (DE, FR, EN)
     const i18n = {
       de: {
         nav_kb: "📖 Klassenbuch", nav_lb: "🏆 Leaderboards", nav_search: "🔍 Lehrer-Suche", nav_admin: "⚙️ Admin",
@@ -317,7 +319,6 @@
       lehrerSuchen();
     }
 
-    // Sprachfilter (LU, DE, FR, EN)
     const badWords = [
       "schäiss", "schaiss", "fick", "ficken", "fotz", "houer", "aschlach", "aarschloch", "pisser", "kack", "spast", "schwuchtel", "bastard", "wixer", "mellt", "blier",
       "schlampe", "fotze", "hurensohn", "arschloch", "scheisse", "scheiße", "wichser", "missgeburt", "hure", "nutte", "drecksau", "vollidiot",
@@ -345,7 +346,6 @@
       }
     }
 
-    // Suchbares Dropdown-System
     function initSearchSelects() {
       document.querySelectorAll(".search-select").forEach(el => {
         const id = el.dataset.id;
@@ -458,7 +458,6 @@
       return new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
     }
 
-    // Einträge, Verspätungen, Abwesenheiten & Vorschläge senden
     async function eintragAbsenden() {
       const lehrer = selectedValues["eintrag-lehrer"];
       const typ = document.getElementById("eintrag-art").value;
@@ -603,7 +602,6 @@
       `;
     }
 
-    // Admin Bereich
     function adminLogin() {
       if (document.getElementById("admin-pw").value === "Gaylord!") {
         document.getElementById("admin-login-box").style.display = "none";
@@ -670,7 +668,6 @@
     }
 
     function renderAdminListen() {
-      // 1. Lehrer
       document.getElementById("admin-lehrer-liste").innerHTML = (globalDaten.lehrer || []).map(l => {
         const s = l.replace(/'/g, "\\'");
         return `<tr><td><b>${l}</b></td><td>
@@ -679,7 +676,6 @@
         </td></tr>`;
       }).join("") || `<tr><td colspan="2">-</td></tr>`;
 
-      // 2. Vorschläge
       const vorschlaegeArr = Object.entries(globalDaten.vorschlaege || {}).reverse();
       document.getElementById("admin-vorschlaege-liste").innerHTML = vorschlaegeArr.map(([id, v]) => {
         const isTeacher = v.art === "lehrer";
@@ -696,7 +692,6 @@
         </tr>`;
       }).join("") || `<tr><td colspan="4">Keine offenen Vorschläge.</td></tr>`;
 
-      // 3. Aktivitäten
       document.getElementById("admin-eintraege-liste").innerHTML = holeAlleAktivitaeten().map(item => `
         <tr>
           <td>${item.datum || "-"}</td>
