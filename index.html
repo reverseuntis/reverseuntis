@@ -32,9 +32,10 @@
     button:hover { background: #e05a00; }
     .table-wrap { width: 100%; overflow-x: auto; }
     
-    /* Scrollbare Admin-Menüs */
-    .admin-scroll { max-height: 250px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 6px; }
-    .admin-scroll thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; box-shadow: 0 1px 0 #ddd; }
+    /* Scrollbare Tabellen (Leaderboards & Admin) */
+    .scroll-box { max-height: 250px; overflow-y: auto; overflow-x: auto; border: 1px solid #eee; border-radius: 6px; }
+    .scroll-box thead th { position: sticky; top: 0; background: #fafafa; z-index: 2; box-shadow: 0 1px 0 #ddd; }
+    .scroll-box table { min-width: 100%; }
 
     table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 0; min-width: 420px; }
     th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #eee; }
@@ -163,24 +164,24 @@
     </div>
   </div>
 
-  <!-- 2. LEADERBOARDS -->
+  <!-- 2. LEADERBOARDS (JETZT SCROLLBAR) -->
   <div id="tab-leaderboards" class="container">
     <div class="grid-2">
       <div class="card">
         <h2 data-i18n="lb_pos">👍 Meiste Positive Einträge</h2>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_count">Anzahl</th></tr></thead><tbody id="lb-pos"></tbody></table></div>
+        <div class="scroll-box"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_count">Anzahl</th></tr></thead><tbody id="lb-pos"></tbody></table></div>
       </div>
       <div class="card">
         <h2 data-i18n="lb_neg">👎 Meiste Negative Einträge</h2>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_count">Anzahl</th></tr></thead><tbody id="lb-neg"></tbody></table></div>
+        <div class="scroll-box"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_count">Anzahl</th></tr></thead><tbody id="lb-neg"></tbody></table></div>
       </div>
       <div class="card">
         <h2 data-i18n="lb_most_late">⚡ Meiste Verspätung</h2>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_min">Minuten</th></tr></thead><tbody id="lb-most-late"></tbody></table></div>
+        <div class="scroll-box"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_min">Minuten</th></tr></thead><tbody id="lb-most-late"></tbody></table></div>
       </div>
       <div class="card">
         <h2 data-i18n="lb_least_late">⭐ Wenigste Verspätung</h2>
-        <div class="table-wrap"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_min">Minuten</th></tr></thead><tbody id="lb-least-late"></tbody></table></div>
+        <div class="scroll-box"><table><thead><tr><th>#</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_min">Minuten</th></tr></thead><tbody id="lb-least-late"></tbody></table></div>
       </div>
     </div>
   </div>
@@ -212,7 +213,7 @@
 
         <div class="card">
           <h2 data-i18n="admin_manage_t">👨‍🏫 Lehrer bearbeiten & entfernen</h2>
-          <div class="admin-scroll">
+          <div class="scroll-box">
             <table>
               <thead><tr><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_action">Aktion</th></tr></thead>
               <tbody id="admin-lehrer-liste"></tbody>
@@ -224,7 +225,7 @@
       <!-- Scrollbare Vorschläge im Admin-Bereich -->
       <div class="card">
         <h2 data-i18n="admin_sug">💡 Eingereichte Vorschläge (Lehrer & Verbesserungen)</h2>
-        <div class="admin-scroll">
+        <div class="scroll-box">
           <table>
             <thead><tr><th data-i18n="th_date">Datum</th><th data-i18n="th_cat">Kategorie</th><th data-i18n="th_details">Vorschlag</th><th data-i18n="th_action">Aktion</th></tr></thead>
             <tbody id="admin-vorschlaege-liste"></tbody>
@@ -235,7 +236,7 @@
       <!-- Scrollbare Aktivitäten im Admin-Bereich -->
       <div class="card">
         <h2 data-i18n="admin_act">🗑️ Alle Aktivitäten verwalten</h2>
-        <div class="admin-scroll" style="max-height: 320px;">
+        <div class="scroll-box" style="max-height: 320px;">
           <table>
             <thead><tr><th data-i18n="th_date">Datum</th><th data-i18n="th_teacher">Lehrer</th><th data-i18n="th_cat">Kategorie</th><th data-i18n="th_details">Details</th><th data-i18n="th_action">Aktion</th></tr></thead>
             <tbody id="admin-eintraege-liste"></tbody>
@@ -595,7 +596,7 @@
       const treffer = holeAlleAktivitaeten().filter(a => a.lehrer === name);
       ergebnisDiv.innerHTML = `
         <h3>${name} (${treffer.length})</h3>
-        <div class="table-wrap"><table>
+        <div class="scroll-box" style="max-height: 350px;"><table>
           <thead><tr><th>${t('th_date')}</th><th>${t('th_cat')}</th><th>${t('th_details')}</th></tr></thead>
           <tbody>${treffer.map(tr => `<tr><td>${tr.datum}</td><td>${formatBadge(tr)}</td><td>${tr.details}</td></tr>`).join("") || `<tr><td colspan="3">-</td></tr>`}</tbody>
         </table></div>
