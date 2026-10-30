@@ -2,55 +2,158 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>ReverseUntis</title>
+  <title>ReverseUntis – Lehrer-Klassenbuch</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-    textarea { width: 100%; height: 350px; font-size: 16px; padding: 10px; box-sizing: border-box; }
-    #status { font-size: 13px; color: gray; margin-top: 5px; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body { margin: 0; background: #f4f5f7; color: #222; }
+    header { background: #ff6600; color: white; padding: 15px 25px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
+    button { background: #ff6600; color: white; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background: #e05a00; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
+    .badge { background: #ff6600; color: white; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
+    .del-btn { background: none; color: red; width: auto; padding: 2px 6px; margin: 0; }
+    .del-btn:hover { background: #fee; }
+    .full-width { grid-column: 1 / -1; }
+    @media (max-width: 700px) { .container { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
-  <textarea id="textfeld" placeholder="Hier tippen – alle PCs sehen denselben Text..."></textarea>
-  <div id="status">Verbinde...</div>
+
+  <header>
+    <span>ReverseUntis</span>
+    <span style="font-size: 13px; font-weight: normal;">Live Lehrer-Klassenbuch</span>
+  </header>
+
+  <div class="container">
+    <!-- 1. NEUER EINTRAG -->
+    <div class="card">
+      <h2>Neuer Klassenbucheintrag</h2>
+      <input id="lehrer" type="text" placeholder="Lehrer (z. B. Herr Müller)">
+      <input id="grund" type="text" placeholder="Grund (z. B. 10 Min zu spät / Technik-Fail)">
+      <select id="punkte">
+        <option value="1">+1 Punkt (Kleinigkeit)</option>
+        <option value="3">+3 Punkte (Standard-Vergehen)</option>
+        <option value="5">+5 Punkte (Kritisch)</option>
+        <option value="-2">-2 Punkte (Ehrenmann-Aktion)</option>
+      </select>
+      <button onclick="eintragen()">Ins Klassenbuch eintragen</button>
+    </div>
+
+    <!-- 2. LEADERBOARD -->
+    <div class="card">
+      <h2>🏆 Lehrer-Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Platz</th>
+            <th>Lehrer</th>
+            <th>Einträge</th>
+            <th>Punkte</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard"></tbody>
+      </table>
+    </div>
+
+    <!-- 3. KLASSENBUCH VERLAUF -->
+    <div class="card full-width">
+      <h2>📖 Klassenbuch-Einträge</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Lehrer</th>
+            <th>Vergehen / Grund</th>
+            <th>Punkte</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="verlauf"></tbody>
+      </table>
+    </div>
+  </div>
 
   <script>
-    const URL = "https://reverseuntis-default-rtdb.europe-west1.firebasedatabase.app/textfeld.json";
-    const textfeld = document.getElementById("textfeld");
-    const status = document.getElementById("status");
-    let tipptGerade = false;
-    let timer;
+    const DB_URL = "https://reverseuntis-default-rtdb.europe-west1.firebasedatabase.app/klassenbuch";
 
-    // 1. Beim Tippen automatisch für alle speichern (mit PUT überschreiben)
-    textfeld.addEventListener("input", () => {
-      tipptGerade = true;
-      status.innerText = "Speichert...";
-      clearTimeout(timer);
-
-      timer = setTimeout(async () => {
-        await fetch(URL, {
-          method: "PUT",
-          body: JSON.stringify({ inhalt: textfeld.value })
-        });
-        status.innerText = "Gespeichert ✅";
-        tipptGerade = false;
-      }, 300);
-    });
-
-    // 2. Jede Sekunde prüfen, ob ein anderer PC etwas geändert hat
     async function laden() {
-      if (tipptGerade) return; // Blockiert Überschreiben, solange du selbst tippst
-
-      const res = await fetch(URL);
+      const res = await fetch(`${DB_URL}.json`);
       const data = await res.json();
 
-      if (data && data.inhalt !== undefined && textfeld.value !== data.inhalt) {
-        textfeld.value = data.inhalt;
-      }
-      status.innerText = "Live synchronisiert ✅";
+      const verlaufBody = document.getElementById("verlauf");
+      const boardBody = document.getElementById("leaderboard");
+      verlaufBody.innerHTML = "";
+      boardBody.innerHTML = "";
+
+      if (!data) return;
+
+      const stats = {};
+      const eintraege = Object.entries(data).reverse(); // Neueste zuerst
+
+      // Klassenbuch füllen & Punkte pro Lehrer zusammenrechnen
+      eintraege.forEach(([id, e]) => {
+        const name = e.lehrer.trim();
+        const pkt = Number(e.punkte) || 0;
+
+        if (!stats[name]) stats[name] = { punkte: 0, anzahl: 0 };
+        stats[name].punkte += pkt;
+        stats[name].anzahl += 1;
+
+        verlaufBody.innerHTML += `
+          <tr>
+            <td>${e.datum || "-"}</td>
+            <td><b>${name}</b></td>
+            <td>${e.grund}</td>
+            <td><span class="badge">${pkt > 0 ? "+" + pkt : pkt}</span></td>
+            <td><button class="del-btn" onclick="loeschen('${id}')">❌</button></td>
+          </tr>`;
+      });
+
+      // Leaderboard nach Punkten sortieren
+      const sortiert = Object.entries(stats).sort((a, b) => b[1].punkte - a[1].punkte);
+
+      sortiert.forEach(([name, info], index) => {
+        const medaille = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+        boardBody.innerHTML += `
+          <tr>
+            <td><b>${medaille}</b></td>
+            <td>${name}</td>
+            <td>${info.anzahl}x</td>
+            <td><span class="badge">${info.punkte} Pkt.</span></td>
+          </tr>`;
+      });
+    }
+
+    async function eintragen() {
+      const lehrer = document.getElementById("lehrer").value.trim();
+      const grund = document.getElementById("grund").value.trim();
+      const punkte = Number(document.getElementById("punkte").value);
+
+      if (!lehrer || !grund) return alert("Bitte Lehrer und Grund eingeben!");
+
+      const jetzt = new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+      await fetch(`${DB_URL}.json`, {
+        method: "POST",
+        body: JSON.stringify({ lehrer, grund, punkte, datum: jetzt })
+      });
+
+      document.getElementById("grund").value = "";
+      laden();
+    }
+
+    async function loeschen(id) {
+      await fetch(`${DB_URL}/${id}.json`, { method: "DELETE" });
+      laden();
     }
 
     laden();
-    setInterval(laden, 1000);
+    setInterval(laden, 2000); // Aktualisiert alle 2 Sekunden live auf allen PCs
   </script>
 </body>
 </html>
