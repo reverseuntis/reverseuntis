@@ -2,58 +2,406 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>ReverseUntis – Lehrer-Klassenbuch</title>
+  <title>ReverseUntis – Klassenbuch & Leaderboards</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
     body { margin: 0; background: #f4f5f7; color: #222; }
     header { background: #ff6600; color: white; padding: 15px 25px; font-size: 20px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-    .container { max-width: 1050px; margin: 20px auto; padding: 0 15px; display: grid; grid-template-columns: 1fr 1.6fr; gap: 20px; }
-    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    nav { background: #e05a00; padding: 10px 25px; display: flex; gap: 10px; }
+    nav button { background: transparent; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; width: auto; margin: 0; }
+    nav button.active, nav button:hover { background: rgba(255,255,255,0.2); }
+    .container { max-width: 1100px; margin: 20px auto; padding: 0 15px; display: none; }
+    .container.active { display: block; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
     h2 { margin-top: 0; font-size: 18px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
     input, select, button { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 14px; }
     button { background: #ff6600; color: white; border: none; font-weight: bold; cursor: pointer; }
     button:hover { background: #e05a00; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 10px; }
     th, td { text-align: left; padding: 8px; border-bottom: 1px solid #eee; }
     .badge-pos { background: #d4edda; color: #155724; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
     .badge-neg { background: #f8d7da; color: #721c24; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
     .badge-late { background: #fff3cd; color: #856404; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 12px; }
     .del-btn { background: none; color: red; width: auto; padding: 2px 6px; margin: 0; }
     .del-btn:hover { background: #fee; }
-    .full-width { grid-column: 1 / -1; }
-    @media (max-width: 750px) { .container { grid-template-columns: 1fr; } }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .console { background: #1e1e1e; color: #00ff00; font-family: monospace; padding: 15px; border-radius: 5px; height: 180px; overflow-y: auto; font-size: 13px; }
+    @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 
   <header>
     <span>ReverseUntis</span>
-    <span style="font-size: 13px; font-weight: normal;">Live Lehrer-Klassenbuch</span>
+    <span style="font-size: 13px; font-weight: normal;">Live Klassenbuch & Leaderboards</span>
   </header>
 
-  <div class="container">
-    <!-- 1. NEUER EINTRAG -->
-    <div class="card">
-      <h2>Neuer Eintrag</h2>
-      <input id="lehrer" list="lehrer-liste" type="text" placeholder="Lehrer (z. B. Herr Müller)">
-      <datalist id="lehrer-liste"></datalist>
+  <nav>
+    <button onclick="tab('klassenbuch')" id="btn-klassenbuch" class="active">📖 Klassenbuch</button>
+    <button onclick="tab('leaderboards')" id="btn-leaderboards">🏆 Leaderboards</button>
+    <button onclick="tab('suche')" id="btn-suche">🔍 Lehrer-Suche</button>
+    <button onclick="tab('admin')" id="btn-admin">⚙️ Admin-Bereich</button>
+  </nav>
 
-      <select id="typ">
-        <option value="neg">👎 Negativ-Eintrag</option>
-        <option value="pos">👍 Positiv-Eintrag</option>
-        <option value="none">➖ Neutral (Nur Verspätung)</option>
-      </select>
+  <!-- 1. KLASSENBUCH -->
+  <div id="tab-klassenbuch" class="container active">
+    <div class="grid-2">
+      <div class="card">
+        <h2>Neuer Eintrag</h2>
+        <select id="eintrag-lehrer"></select>
+        <select id="eintrag-art">
+          <option value="pos">👍 Positiver Eintrag</option>
+          <option value="neg">👎 Negativer Eintrag</option>
+        </select>
+        <input id="eintrag-grund" type="text" placeholder="Grund / Notiz...">
+        <button onclick="eintragAbsenden()">Eintrag speichern</button>
+      </div>
 
-      <input id="verspaetung" type="number" min="0" placeholder="Verspätung in Minuten (optional, z. B. 10)">
-      <input id="grund" type="text" placeholder="Grund / Notiz (optional bei Verspätung)">
-
-      <button onclick="eintragen()">Ins Klassenbuch eintragen</button>
+      <div class="card">
+        <h2>⏰ Verspätung erfassen</h2>
+        <select id="verspaetung-lehrer"></select>
+        <input id="verspaetung-minuten" type="number" min="1" placeholder="Minuten zu spät...">
+        <input id="verspaetung-grund" type="text" placeholder="Grund (optional)...">
+        <button onclick="verspaetungAbsenden()">Verspätung speichern</button>
+      </div>
     </div>
 
-    <!-- 2. LEADERBOARD -->
     <div class="card">
-      <h2>🏆 Lehrer-Leaderboard</h2>
+      <h2>Letzte Aktivitäten</h2>
       <table>
         <thead>
-          <tr>
-            <th>Platz</th>
+          <tr><th>Datum</th><th>Lehrer</th><th>Typ</th><th>Wert / Grund</th></tr>
+        </thead>
+        <tbody id="live-verlauf"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 2. LEADERBOARDS -->
+  <div id="tab-leaderboards" class="container">
+    <div class="grid-2">
+      <div class="card">
+        <h2>👍 Meiste Positive Einträge</h2>
+        <table><thead><tr><th>Platz</th><th>Lehrer</th><th>Anzahl</th></tr></thead><tbody id="lb-pos"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>👎 Meiste Negative Einträge</h2>
+        <table><thead><tr><th>Platz</th><th>Lehrer</th><th>Anzahl</th></tr></thead><tbody id="lb-neg"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>⚡ Meisten Verspätungs-Minuten</h2>
+        <table><thead><tr><th>Platz</th><th>Lehrer</th><th>Minuten</th></tr></thead><tbody id="lb-most-late"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>⭐ Am wenigsten Verspätung</h2>
+        <table><thead><tr><th>Platz</th><th>Lehrer</th><th>Minuten</th></tr></thead><tbody id="lb-least-late"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. LEHRER SUCHE -->
+  <div id="tab-suche" class="container">
+    <div class="card">
+      <h2>Lehrer-Profil & Historie</h2>
+      <select id="suche-lehrer-select" onchange="lehrerSuchen()" style="margin-bottom: 15px;">
+        <option value="">-- Lehrer auswählen --</option>
+      </select>
+      <div id="suche-ergebnis">Wähle einen Lehrer aus, um alle Einträge und Verspätungen zu sehen.</div>
+    </div>
+  </div>
+
+  <!-- 4. ADMIN BEREICH -->
+  <div id="tab-admin" class="container">
+    <div class="card" id="admin-login-box">
+      <h2>Admin Login</h2>
+      <input id="admin-pw" type="password" placeholder="Passwort eingeben...">
+      <button onclick="adminLogin()">Anmelden</button>
+    </div>
+
+    <div id="admin-panel" style="display:none;">
+      <div class="card">
+        <h2>Lehrer hinzufügen</h2>
+        <input id="neuer-lehrer-name" type="text" placeholder="Vor- und Nachname des Lehrers...">
+        <button onclick="lehrerHinzufuegen()">Lehrer zur Datenbank hinzufügen</button>
+      </div>
+
+      <div class="card">
+        <h2>Einträge verwalten & löschen</h2>
+        <table>
+          <thead><tr><th>Datum</th><th>Lehrer</th><th>Art / Grund</th><th>Aktion</th></tr></thead>
+          <tbody id="admin-eintraege-liste"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>🖥️ System & Verbindungs-Diagnose</h2>
+        <div class="console" id="diagnose-console">Starte Diagnose...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const URL_DB = "https://reverseuntis-default-rtdb.europe-west1.firebasedatabase.app";
+    let globalDaten = {eintraege: {}, verspaetungen: {}, lehrer: []};
+
+    // Schimpfwortfilter (Luxemburgisch, Deutsch, Französisch, Englisch)
+    const badWords = [
+      "schlampe", "fotze", "hurensohn", "arschloch", "scheisse", "scheiße", "fk", "fuck", "shit", "bitch", "asshole",
+      "connard", "salope", "pute", "merde", "fesse",
+      "scheiss", "drecks", "mellt", "blier", "virst" // Lokale Begriffe
+    ];
+
+    function pruefeText(text) {
+      if (!text) return "";
+      let sauber = text;
+      badWords.forEach(wort => {
+        const regex = new RegExp(wort, "gi");
+        sauber = sauber.replace(regex, "***");
+      });
+      return sauber;
+    }
+
+    // Tabs umschalten
+    function tab(name) {
+      document.querySelectorAll('.container').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`tab-${name}`).classList.add('active');
+      document.getElementById(`btn-${name}`).classList.add('active');
+      if(name === 'leaderboards') renderLeaderboards();
+    }
+
+    // Daten laden
+    async function datenLaden() {
+      logConsole("Prüfe Verbindung zur Firebase-Datenbank...");
+      try {
+        const res = await fetch(`${URL_DB}/.json`);
+        if (!res.ok) throw new Error("HTTP Fehler: " + res.status);
+        const data = await res.json();
+        
+        globalDaten = data || {eintraege: {}, verspaetungen: {}, lehrer: []};
+        logConsole("Verbindung erfolgreich! Daten synchronisiert.");
+
+        aktualisiereDropdowns();
+        renderVerlauf();
+        if(document.getElementById('tab-admin').classList.contains('active')) renderAdminListe();
+      } catch (err) {
+        logConsole("⚠️ FEHLER: Keine Verbindung zur Datenbank oder Netzwerkproblem! (" + err.message + ")");
+      }
+    }
+
+    function logConsole(msg) {
+      const con = document.getElementById("diagnose-console");
+      if(con) {
+        const zeit = new Date().toLocaleTimeString();
+        con.innerHTML += `[${zeit}] ${msg}<br>`;
+        con.scrollTop = con.scrollHeight;
+      }
+    }
+
+    function aktuelldatum() {
+      return new Date().toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    }
+
+    function aktualisiereDropdowns() {
+      const lehrerList = globalDaten.lehrer || [];
+      const optionen = lehrerList.length ? lehrerList.map(l => `<option value="${l}">${l}</option>`).join("") : `<option value="">Keine Lehrer vorhanden (Admin fragen)</option>`;
+      
+      document.getElementById("eintrag-lehrer").innerHTML = optionen;
+      document.getElementById("verspaetung-lehrer").innerHTML = optionen;
+      document.getElementById("suche-lehrer-select").innerHTML = `<option value="">-- Lehrer auswählen --</option>` + optionen;
+    }
+
+    // Einträge abschicken
+    async function eintragen() {
+      // Hilfsfunktion
+    }
+
+    async function eintragAbsenden() {
+      const lehrer = document.getElementById("eintrag-lehrer").value;
+      const typ = document.getElementById("eintrag-art").value;
+      const grund = pruefeText(document.getElementById("eintrag-grund").value.trim());
+
+      if (!lehrer) return alert("Bitte Lehrer auswählen!");
+
+      await fetch(`${URL_DB}/eintraege.json`, {
+        method: "POST",
+        body: JSON.stringify({ lehrer, typ, grund, datum: aktuelldatum() })
+      });
+
+      document.getElementById("eintrag-grund").value = "";
+      datenLaden();
+      alert("Eintrag gespeichert!");
+    }
+
+    async function verspaetungAbsenden() {
+      const lehrer = document.getElementById("verspaetung-lehrer").value;
+      const minuten = Number(document.getElementById("verspaetung-minuten").value);
+      const grund = pruefeText(document.getElementById("verspaetung-grund").value.trim());
+
+      if (!lehrer || !minuten || minuten <= 0) return alert("Bitte Lehrer und gültige Minuten eingeben!");
+
+      await fetch(`${URL_DB}/verspaetungen.json`, {
+        method: "POST",
+        body: JSON.stringify({ lehrer, minuten, grund, datum: aktuelldatum() })
+      });
+
+      document.getElementById("verspaetung-minuten").value = "";
+      document.getElementById("verspaetung-grund").value = "";
+      datenLaden();
+      alert("Verspätung gespeichert!");
+    }
+
+    // Verlauf rendern
+    function renderVerlauf() {
+      const verlaufBody = document.getElementById("live-verlauf");
+      verlaufBody.innerHTML = "";
+
+      const eintraege = globalDaten.eintraege ? Object.entries(globalDaten.eintraege).reverse() : [];
+      eintraege.slice(0, 15).forEach(([id, e]) => {
+        const badge = e.typ === 'pos' ? `<span class="badge-pos">👍 Positiv</span>` : `<span class="badge-neg">👎 Negativ</span>`;
+        verlaufBody.innerHTML += `<tr><td>${e.datum}</td><td><b>${e.lehrer}</b></td><td>${badge}</td><td>${e.grund || '-'}</td></tr>`;
+      });
+    }
+
+    // 4 Leaderboards
+    function renderLeaderboards() {
+      const posStats = {};
+      const negStats = {};
+      const minStats = {};
+
+      // Initialisieren mit allen Lehrern
+      (globalDaten.lehrer || []).forEach(l => {
+        posStats[l] = 0; negStats[l] = 0; minStats[l] = 0;
+      });
+
+      if (globalDaten.eintraege) {
+        Object.values(globalDaten.eintraege).forEach(e => {
+          if (!posStats[e.lehrer]) { posStats[e.lehrer] = 0; negStats[e.lehrer] = 0; }
+          if (e.typ === 'pos') posStats[e.lehrer]++;
+          if (e.typ === 'neg') negStats[e.lehrer]++;
+        });
+      }
+
+      if (globalDaten.verspaetungen) {
+        Object.values(globalDaten.verspaetungen).forEach(v => {
+          if (minStats[v.lehrer] === undefined) minStats[v.lehrer] = 0;
+          minStats[v.lehrer] += Number(v.minuten) || 0;
+        });
+      }
+
+      // Tabellen befüllen
+      document.getElementById("lb-pos").innerHTML = sortAndRender(posStats, 'anzahl', 'pos');
+      document.getElementById("lb-neg").innerHTML = sortAndRender(negStats, 'anzahl', 'neg');
+      document.getElementById("lb-most-late").innerHTML = sortAndRender(minStats, 'Minuten', 'late');
+      document.getElementById("lb-least-late").innerHTML = sortAndRender(minStats, 'Minuten', 'least');
+    }
+
+    function sortAndRender(obj, einheit, typ) {
+      let arr = Object.entries(obj);
+      if (typ === 'least') {
+        arr.sort((a,b) => a[1] - b[1]);
+      } else {
+        arr.sort((a,b) => b[1] - a[1]);
+      }
+
+      return arr.map(([name, val], index) => {
+        const medaille = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : `${index + 1}.`;
+        return `<tr><td><b>${medaille}</b></td><td>${name}</td><td><b>${val} ${einheit}</b></td></tr>`;
+      }).join("") || `<tr><td colspan="3">Keine Daten</td></tr>`;
+    }
+
+    // Lehrersuche
+    function lehrerSuchen() {
+      const name = document.getElementById("suche-lehrer-select").value;
+      const ergebnisDiv = document.getElementById("suche-ergebnis");
+      if (!name) { ergebnisDiv.innerHTML = "Wähle einen Lehrer aus."; return; }
+
+      let html = `<h3>Aktivitäten für ${name}</h3>`;
+      
+      html += `<h4>Einträge:</h4><ul>`;
+      let hatEintraege = false;
+      if (globalDaten.eintraege) {
+        Object.values(globalDaten.eintraege).forEach(e => {
+          if (e.lehrer === name) {
+            hatEintraege = true;
+            html += `<li>[${e.datum}] <b>${e.typ === 'pos' ? '👍 Positiv' : '👎 Negativ'}</b>: ${e.grund || 'Kein Grund'}</li>`;
+          }
+        });
+      }
+      if (!hatEintraege) html += `<li>Keine Einträge vorhanden.</li>`;
+      html += `</ul>`;
+
+      html += `<h4>Verspätungen:</h4><ul>`;
+      let hatVerspaetung = false;
+      if (globalDaten.verspaetungen) {
+        Object.values(globalDaten.verspaetungen).forEach(v => {
+          if (v.lehrer === name) {
+            hatVerspaetung = true;
+            html += `<li>[${v.datum}] ⏰ <b>${v.minuten} Min. zu spät</b> (${v.grund || 'Kein Grund'})</li>`;
+          }
+        });
+      }
+      if (!hatVerspaetung) hatVerspaetung = html += `<li>Keine Verspätungen eingetragen.</li>`;
+      html += `</ul>`;
+
+      ergebnisDiv.innerHTML = html;
+    }
+
+    // Admin Login & Aktionen
+    function adminLogin() {
+      const pw = document.getElementById("admin-pw").value;
+      if (pw === "Gaylord!") {
+        document.getElementById("admin-login-box").style.display = "none";
+        document.getElementById("admin-panel").style.display = "block";
+        renderAdminListe();
+        logConsole("Admin erfolgreich eingeloggt.");
+      } else {
+        alert("Falsches Passwort!");
+        logConsole("⚠️ Fehlgeschlagener Admin-Login Versuch.");
+      }
+    }
+
+    async function lehrerHinzufuegen() {
+      const neuerLehrer = document.getElementById("neuer-lehrer-name").value.trim();
+      if (!neuerLehrer) return alert("Bitte Namen eingeben!");
+
+      let lehrerListe = globalDaten.lehrer || [];
+      if (lehrerListe.includes(neuerLehrer)) return alert("Lehrer existiert bereits!");
+
+      lehrerListe.push(neuerLehrer);
+
+      await fetch(`${URL_DB}/lehrer.json`, {
+        method: "PUT",
+        body: JSON.stringify(lehrerListe)
+      });
+
+      document.getElementById("neuer-lehrer-name").value = "";
+      logConsole(`Lehrer "${neuerLehrer}" hinzugefügt.`);
+      datenLaden();
+      alert("Lehrer hinzugefügt!");
+    }
+
+    function renderAdminListe() {
+      const tbody = document.getElementById("admin-eintraege-liste");
+      tbody.innerHTML = "";
+
+      if (globalDaten.eintraege) {
+        Object.entries(globalDaten.eintraege).forEach(([id, e]) => {
+          tbody.innerHTML += `<tr><td>${e.datum}</td><td>${e.lehrer}</td><td>${e.typ} - ${e.grund || ''}</td><td><button class="del-btn" onclick="eintragLoeschen('${id}')">❌ Löschen</button></td></tr>`;
+        });
+      }
+    }
+
+    async function eintragLoeschen(id) {
+      if(!confirm("Eintrag wirklich löschen?")) return;
+      await fetch(`${URL_DB}/eintraege/${id}.json`, { method: "DELETE" });
+      logConsole(`Eintrag ${id} gelöscht.`);
+      datenLaden();
+    }
+
+    // Start-Initialisierung
+    datenLaden();
+    setInterval(datenLaden, 5000); // Live-Sync alle 5 Sekunden
+  </script>
+</body>
+</html>
